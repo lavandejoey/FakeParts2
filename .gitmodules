@@ -2,3 +2,7 @@
 	path = StyleTrans/AnyV2V
 	url = https://github.com/lavandejoey/AnyV2V.git
 	branch = main
+[submodule "StyleTrans/UniVST"]
+	path = StyleTrans/UniVST
+	url = https://github.com/lavandejoey/UniVST
+	branch = main
