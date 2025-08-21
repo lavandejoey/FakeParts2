@@ -1,0 +1,4 @@
+[submodule "StyleTrans/AnyV2V"]
+	path = StyleTrans/AnyV2V
+	url = https://github.com/lavandejoey/AnyV2V.git
+	branch = main

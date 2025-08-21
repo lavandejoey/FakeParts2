@@ -1,0 +1,96 @@
+# ----------------------------
+# Python / PyTorch
+# ----------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dll
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+*.conda
+*.egg-info/
+.eggs/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# ----------------------------
+# Deep Learning Artifacts
+# ----------------------------
+# model checkpoints, weights
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# training logs
+*.log
+logs/
+wandb/
+lightning_logs/
+runs/
+
+# datasets / cache (customize as needed)
+data/
+datasets/
+.cache/
+__cache__/
+*.npz
+*.npy
+
+# huggingface cache (keep out of repo)
+huggingface_cache/
+~/.cache/huggingface/
+
+# ----------------------------
+# System / IDE
+# ----------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# VSCode / JetBrains
+.vscode/
+.idea/
+*.iml
+
+# ----------------------------
+# Build / Dist
+# ----------------------------
+build/
+dist/
+*.egg
+*.manifest
+*.spec
+
+# ----------------------------
+# Project Specific
+# ----------------------------
+# generated images / videos
+outputs/
+results/
+samples/
+*.mp4
+*.avi
+*.mov
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# exclude local test scripts or secrets
+secrets.*
+*.local.json
