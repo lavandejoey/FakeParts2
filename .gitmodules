@@ -6,3 +6,7 @@
 	path = StyleTrans/UniVST
 	url = https://github.com/lavandejoey/UniVST
 	branch = main
+[submodule "Detectors/AIGVDet"]
+	path = Detectors/AIGVDet
+	url = https://github.com/lavandejoey/AIGVDet
+	branch = main
