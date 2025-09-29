@@ -114,6 +114,7 @@ def load_prompts(args: argparse.Namespace):
     else:
         names_selected = random.sample(names_todo, args.num)
     logging.info(f"Under {args.output_path},\n"
+                 f"Prompt {prompts_path}:\n"
                  f"\t Total prompts found: {len(names)}\n"
                  f"\t Already done: {len(done_names)}\n"
                  f"\t To do: {len(names_todo)}\n"

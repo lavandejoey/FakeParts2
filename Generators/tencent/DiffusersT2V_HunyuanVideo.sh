@@ -4,7 +4,7 @@
 #SBATCH --error=logs/DiffusersT2V_HunyuanVideo_%j.err
 #SBATCH --time=24:00:00
 #SBATCH --partition=L40S
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:2
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
 
@@ -26,7 +26,7 @@ srun python3 -W ignore \
   ./DiffusersT2V_HunyuanVideo.py \
   -p "/projects/hi-paris/DeepFakeDataset/T2V_prompts/prompts_gemini/gemini_1" \
   -o "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/T2V/hunyuanvideo-community/HunyuanVideo" \
-  -n 1000
+  -n 200
 
 EXIT_CODE=$?
 

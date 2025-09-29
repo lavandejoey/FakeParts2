@@ -1,0 +1,44 @@
+#!/bin/bash
+#SBATCH --job-name="CosmosPredict2_sm"
+#SBATCH --output=logs/DiffusersT2V_CosmosPredict2_sm_%j.out
+#SBATCH --error=logs/DiffusersT2V_CosmosPredict2_sm_%j.err
+#SBATCH --time=24:00:00
+#SBATCH --partition=L40S
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=64G
+
+set -euo pipefail
+
+# Print environment and script info
+echo "============================================================"
+echo "SLURM JOB: $SLURM_JOB_NAME (ID: $SLURM_JOB_ID)"
+echo "Node: $SLURMD_NODENAME"
+echo "Start time: $(date)"
+echo "============================================================"
+
+# Activate conda environment
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate cosmos311
+
+# Set experiment variables
+srun python3 -W ignore \
+  ./DiffusersV2V_CosmosPredict2_sm.py \
+  -v "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/10k_real_video_captions.csv" \
+  -o "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/V2V/nvidia/Cosmos-Predict2-2B-Video2World" \
+  -n 500
+#srun python3 -W ignore \
+#  ./DiffusersV2V_CosmosPredict2_sm.py \
+#  -v "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/10k_real" \
+#  -o "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/V2V/nvidia/Cosmos-Predict2-14B-Video2World" \
+#  -n 500
+# python3 ~/FakeParts2/Extrapolation/CosmosPredict2_sm/DiffusersV2V_CosmosPredict2_sm.py -v "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/10k_real" -o "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/V2V/nvidia/Cosmos-Predict2-2B-Video2World" -n 500
+# python3 ./hf_video2world.py "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/V2V/nvidia/Cosmos-Predict2-14B-Video2World" --prompt "./default_prompt" --negative_prompt "./default_neg" --video "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/10k_real/3.mp4" -v
+
+EXIT_CODE=$?
+
+echo "============================================================"
+echo "End time: $(date)"
+echo "Exit code: $EXIT_CODE"
+echo "============================================================"
+exit $EXIT_CODE

@@ -4,9 +4,9 @@
 #SBATCH --error=logs/DiffusersT2V_LTX_%j.err
 #SBATCH --time=24:00:00
 #SBATCH --partition=L40S
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:2
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=32G
+#SBATCH --mem=64G
 
 set -euo pipefail
 
@@ -24,7 +24,7 @@ conda activate deepfake311
 # Set experiment variables
 srun python3 -W ignore \
   ./DiffusersT2V_LTX.py \
-  -p "/projects/hi-paris/DeepFakeDataset/T2V_prompts/prompts_gemini/gemini_1" \
+  -p "/projects/hi-paris/DeepFakeDataset/T2V_prompts/prompts_gemini/gemini_3" \
   -o "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/T2V/Lightricks/LTX-Video-0.9.7-distilled" \
   -n 1000
 

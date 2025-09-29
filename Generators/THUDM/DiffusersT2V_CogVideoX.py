@@ -6,9 +6,9 @@ Model params:
 - Model: THUDM/CogVideoX-5b
 - Dtype: bfloat16
 - VAE Tiling: Enabled
-- L40S 11263MiB 22min
-- A100 TODO
-- TODO GiB using CPU offload
+- L40S 11263MiB ~22min
+- 3096 11263MiB ~6min
+- A100 11263MiB ~4min
 
 Video params:
 - Frames: 129 (5s at 25 FPS)
@@ -113,6 +113,7 @@ def load_prompts(args: argparse.Namespace):
     else:
         names_selected = random.sample(names_todo, args.num)
     logging.info(f"Under {args.output_path},\n"
+                 f"Prompt {prompts_path}:\n"
                  f"\t Total prompts found: {len(names)}\n"
                  f"\t Already done: {len(done_names)}\n"
                  f"\t To do: {len(names_todo)}\n"

@@ -7,9 +7,8 @@ Model params:
 - Model: Lightricks/LTX-Video-0.9.8-13B-distilled
 - Dtype: bfloat16
 - VAE Tiling: Enabled
-- L40S MiB ~1min
-- A100 MiB ~TODO
-- TODO GiB using CPU offload
+- L40S 43781MiB ~2min
+- A100 ----
 
 Video params:
 - Frames: 129 (5s at 25 FPS)
@@ -121,6 +120,7 @@ def load_prompts(args: argparse.Namespace):
     else:
         names_selected = random.sample(names_todo, args.num)
     logging.info(f"Under {args.output_path},\n"
+                 f"Prompt {prompts_path}:\n"
                  f"\t Total prompts found: {len(names)}\n"
                  f"\t Already done: {len(done_names)}\n"
                  f"\t To do: {len(names_todo)}\n"
@@ -145,10 +145,11 @@ def setup_pipeline() -> tuple[LTXConditionPipeline, LTXLatentUpsamplePipeline]:
     )
 
     logging.info(f"Model loaded. Moving to GPU...")
+
     # Enable memory savings
     pipe.to("cuda")
-    pipe_upsample.to("cuda")
     pipe.vae.enable_tiling()
+    pipe_upsample.to("cuda")
 
     return pipe, pipe_upsample
 

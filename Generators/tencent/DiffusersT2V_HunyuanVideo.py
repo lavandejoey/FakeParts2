@@ -6,9 +6,10 @@ Model params:
 - Model: hunyuanvideo-community/HunyuanVideo
 - Dtype: float16
 - VAE Tiling: Enabled
-- L40S 45415MiB ~1h30min
+- H100 ~1h20min
+- L40S ~1h30min
 - A100 ----
-- 46GiB using CPU offload
+- 46GiB using seq CPU offload
 
 Video params:
 - Frames: 129 (5s at 25 FPS)
@@ -25,6 +26,7 @@ Options:
 
     -n, --num         Number of videos to generate (default: 1)
     --repeat          Enable repeating prompts (default: False)
+    --workers N       Number of workers for data loading (default: 1)
 """
 import argparse
 import glob
@@ -32,6 +34,8 @@ import logging
 import os
 import random
 from pathlib import Path
+from pathlib import Path
+from multiprocessing import Process, Queue, set_start_method
 
 import torch
 from diffusers import HunyuanVideoPipeline, HunyuanVideoTransformer3DModel
@@ -39,7 +43,8 @@ from diffusers.utils import export_to_video
 
 # import warnings
 # warnings.filterwarnings("ignore")
-# os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True,max_split_size_mb:128"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True,max_split_size_mb:128"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # ========== GLOBAL SETTINGS ==========
 VIDEO_PARAMS = {
     "num_frames": 129,  # 5s at 25 FPS
@@ -110,6 +115,7 @@ def load_prompts(args: argparse.Namespace):
     else:
         names_selected = random.sample(names_todo, args.num)
     logging.info(f"Under {args.output_path},\n"
+                 f"Prompt {prompts_path}:\n"
                  f"\t Total prompts found: {len(names)}\n"
                  f"\t Already done: {len(done_names)}\n"
                  f"\t To do: {len(names_todo)}\n"
@@ -126,17 +132,19 @@ def setup_pipeline() -> HunyuanVideoPipeline:
         subfolder="transformer",
         torch_dtype=MODEL_PARAMS["torch_dtype"],
         use_safetensors=True,
+        device_map="balanced",
     )
     pipe = HunyuanVideoPipeline.from_pretrained(
         MODEL_PARAMS["pretrained_model_name_or_path"],
         transformer=transformer,
         torch_dtype=MODEL_PARAMS["torch_dtype"],
         use_safetensors=True,
+        device_map="balanced",
     )
     logging.info(f"Model loaded. Moving to GPU...")
     # Enable memory savings
     pipe.enable_vae_tiling()
-    pipe.enable_model_cpu_offload()
+    # pipe.enable_model_cpu_offload()
 
     return pipe
 
@@ -156,8 +164,10 @@ def generate_video(args: argparse.Namespace, pipe: HunyuanVideoPipeline,
 
         # Run generation with autocast using the same dtype as the model
         try:
-            with torch.inference_mode(), torch.autocast("cuda",
-                                                        dtype=MODEL_PARAMS["torch_dtype"], cache_enabled=False):
+            with torch.inference_mode(), torch.autocast(
+                    "cuda",
+                    dtype=MODEL_PARAMS["torch_dtype"],
+                    cache_enabled=False):
                 frames = pipe(
                     prompt,
                     num_inference_steps=VIDEO_PARAMS["num_inference_steps"],
