@@ -3,7 +3,7 @@
 #SBATCH --output=logs/DiffusersT2V_VideoChat_%j.out
 #SBATCH --error=logs/DiffusersT2V_VideoChat_%j.err
 #SBATCH --time=1-00:00:00
-#SBATCH --partition=A100
+#SBATCH --partition=A40
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=20G
@@ -23,7 +23,7 @@ conda activate deepfake311
 # Set experiment variables
 srun python3 -W ignore ./Transformer_VideoChat.py \
   -v "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/10k_real" \
-  -o "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/10k_real_video_captions.csv" \
+  -o "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/10k_real_video_captions_ziyi.csv" \
   -n 10000
 
 EXIT_CODE=$?

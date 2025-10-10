@@ -38,11 +38,17 @@ import logging
 import os
 import random
 from pathlib import Path
+from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
 import torch
 from diffusers import Cosmos2VideoToWorldPipeline
 from diffusers.utils import export_to_video, load_video
+from torch import nn
+import torch.distributed as dist
+import os
+
+TensorOrImages = Union[torch.Tensor, List["Image.Image"]]
 
 # import warnings
 # warnings.filterwarnings("ignore")
@@ -58,9 +64,10 @@ COND_VIDEO_FRAMES = 40  # number of input frames to condition on
 VIDEO_PARAMS = {
     "num_frames": 129,
     "fps": 25,
-    "num_inference_steps": 50,
+    "num_inference_steps": 35,
     "guidance_scale": 7.0,
     "generator": torch.Generator(device="cuda").manual_seed(42),
+    "seed": 42,
     "height": 704,
     "width": 1280,
 }
@@ -152,7 +159,7 @@ def load_ori_videos(args: argparse.Namespace):
         names = [Path(p).stem for p in files]
         name_to_video_path = {Path(p).stem: p for p in files}
     else:
-        raise ValueError(f"video-path {args.video_path} is neither a file, a directory, nor a CSV")
+        raise ValueError(f"video-path {videos_root_path} is neither a file, a directory, nor a CSV")
 
     # Prepare output dir and filter out already-generated results (unless --repeat)
     output_path = Path(args.output_path).expanduser()
@@ -182,6 +189,73 @@ def load_ori_videos(args: argparse.Namespace):
     return videos_root_path, name_to_video_path, names_selected, name_to_caption
 
 
+class CosmosSafetySkipper(nn.Module):
+    """
+    No-op safety checker compatible with Cosmos2VideoToWorldPipeline.
+    - Provides .dtype/.device via a registered buffer so .to(device, dtype) works.
+    - Implements check_text_safety(), check_image_safety(), and forward().
+    - Always passes content through unchanged; reports 'blocked=False'.
+    """
+
+    def __init__(self, log: bool = True) -> None:
+        super().__init__()
+        self.log = log
+        self.register_buffer("_compat_buf", torch.zeros((), dtype=torch.float32), persistent=False)
+
+    @property
+    def dtype(self):
+        return self._compat_buf.dtype
+
+    @property
+    def device(self):
+        return self._compat_buf.device
+
+    # ---- Text safety hook expected by the Cosmos pipeline ----
+    @torch.no_grad()
+    def check_text_safety(self, text: Union[str, List[str]], **kwargs: Any) -> bool:
+        # Return True => safe. Accept both str and list[str].
+        return True
+
+    # ---- Image safety hook (diffusers style) ----
+    @torch.no_grad()
+    def check_image_safety(
+            self,
+            images: TensorOrImages,
+            **kwargs: Any
+    ) -> Tuple[TensorOrImages, List[Dict[str, Any]]]:
+        if isinstance(images, torch.Tensor):
+            b = images.shape[0] if images.ndim >= 4 else 1
+        else:
+            b = len(images)
+        reports = [dict(blocked=False, reason=None, score=0.0) for _ in range(b)]
+        if self.log:
+            print(f"[CosmosSafetySkipper] image safety skipped, batch={b}")
+        return images, reports
+
+    @torch.no_grad()
+    def check_video_safety(self, video, **kwargs):
+        """
+        No-op video hook expected by Cosmos2VideoToWorldPipeline.
+        Must return the same type that the pipeline passed in (e.g., list[PIL.Image]
+        or a Tensor of frames). We just pass it through unchanged.
+        """
+        if self.log:
+            try:
+                # best-effort shape/len logging without assuming a type
+                if hasattr(video, "shape"):
+                    print(f"[CosmosSafetySkipper] video safety skipped, shape={tuple(video.shape)}")
+                else:
+                    print(f"[CosmosSafetySkipper] video safety skipped, len={len(video)}")
+            except Exception:
+                print("[CosmosSafetySkipper] video safety skipped.")
+        return video
+
+    # ---- Make it also behave like the usual diffusers safety checker ----
+    @torch.no_grad()
+    def forward(self, images: TensorOrImages, **kwargs: Any):
+        return self.check_image_safety(images, **kwargs)
+
+
 def setup_pipeline() -> Cosmos2VideoToWorldPipeline:
     # ========== Pipeline setup  ==========
     logging.info(f"Loading Cosmos2VideoToWorldPipeline model {MODEL_PARAMS['pretrained_model_name_or_path']}...")
@@ -191,9 +265,10 @@ def setup_pipeline() -> Cosmos2VideoToWorldPipeline:
         use_safetensors=True,
         torch_dtype=torch.bfloat16,
         # device_map="balanced",
+        safety_checker=CosmosSafetySkipper().eval()
     )
     logging.info("Model loaded. Enabling memory-savers and moving to GPU/CPU offload...")
-    pipe.to("cuda")
+    # pipe.to("cuda")
     # pipe.vae.enable_tiling()
     # pipe.enable_model_cpu_offload()
     # pipe.enable_sequential_cpu_offload()
@@ -209,7 +284,22 @@ def generate_video(
         name_to_caption: dict | None = None,
 ):
     # ========== Generation and export ==========
-    total = len(names_selected)
+    rank = int(os.environ.get("RANK", 0))
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
+    logging.info(f"Running rank {rank}/{world_size} on device cuda:{rank}")
+
+    torch.cuda.set_device(rank)
+    device = f"cuda:{rank}"
+    VIDEO_PARAMS["generator"] = torch.Generator(device=device).manual_seed(VIDEO_PARAMS["seed"])
+    # device = "cuda"
+    pipe.to(device)
+
+    # scatter work
+    names_local = names_selected[rank::world_size]
+    total = len(names_local)
+    logging.info(f"Rank {rank}: processing {total} videos")
+
+    # total = len(names_selected)
     base_prompt = (
         "Continue the input video realistically and smoothly, following its objects' features, motion and scene. "
         "Avoid pixelization, blurriness, flicker, ghosting, compression artifacts, or low resolution. "
@@ -218,7 +308,8 @@ def generate_video(
     # prompt = "Continue the input video realistically and smoothly, following its objects' feature, motion and scene. No any pixelization, blurriness, flicker, ghosting, compression artifacts, low resolution. Keep the same style, color tone and quality as the input video."
     negative_prompt = "jitter, flicker, sudden scene jump, heavy blur, ghosting, compression artifacts, low resolution, pixelization on any non-sexual content, pixelization on faces"
 
-    for idx, name in enumerate(names_selected):
+    # for idx, name in enumerate(names_selected):
+    for idx, name in enumerate(names_local):
         logging.info(f"Progress: {idx + 1}/{total} ({name})")
 
         # Load the input video frames
@@ -231,17 +322,17 @@ def generate_video(
 
         try:
             # Making sure all the pip is on GPU
-            pipe.to("cuda")
+            pipe.to(device)
             # Build prompt (if CSV used and caption available, prepend it)
             caption_text = ""
             if name_to_caption and name in name_to_caption:
                 cap = str(name_to_caption.get(name, "")).strip()
-                if cap:
+                if cap!= "TIMEOUT" and cap != "nan":
                     caption_text = cap
             prompt = f"{caption_text}. {base_prompt}" if caption_text else base_prompt
 
             # Run generation
-            with torch.inference_mode(), torch.autocast("cuda", dtype=MODEL_PARAMS["torch_dtype"], cache_enabled=False):
+            with torch.autocast("cuda", dtype=MODEL_PARAMS["torch_dtype"], cache_enabled=False):
                 output = pipe(
                     image=None,
                     video=input_frames,

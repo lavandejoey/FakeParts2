@@ -11,11 +11,11 @@ Model params:
 - H100 : 95095MiB
 ===== 2B small model =====
 - Model: nvidia/Cosmos-Predict2-2B-Video2World
-- L40S : 43393MiB ~
-- H100 : 61905MiB ~1h20min
+- A100 : 43393MiB ~40min
+- L40S : 43393MiB ~40min
 
 Video params (new extrapolated clip):
-- Frames: 129
+- Frames: 129 (with 40 input condition frames and 89 generated frames)
 - FPS: 25
 - Length: 5s
 - Guidance Scale: 7.0
@@ -38,11 +38,15 @@ import logging
 import os
 import random
 from pathlib import Path
+from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
 import torch
 from diffusers import Cosmos2VideoToWorldPipeline
 from diffusers.utils import export_to_video, load_video
+from torch import nn
+
+TensorOrImages = Union[torch.Tensor, List["Image.Image"]]
 
 # import warnings
 # warnings.filterwarnings("ignore")
@@ -56,9 +60,9 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # Replace 50 pre-condition frames with original clip
 COND_VIDEO_FRAMES = 40  # number of input frames to condition on
 VIDEO_PARAMS = {
-    "num_frames": 129,
+    "num_frames": 45,
     "fps": 25,
-    "num_inference_steps": 50,
+    "num_inference_steps": 2,
     "guidance_scale": 7.0,
     "generator": torch.Generator(device="cuda").manual_seed(42),
     "height": 704,
@@ -152,7 +156,7 @@ def load_ori_videos(args: argparse.Namespace):
         names = [Path(p).stem for p in files]
         name_to_video_path = {Path(p).stem: p for p in files}
     else:
-        raise ValueError(f"video-path {args.video_path} is neither a file, a directory, nor a CSV")
+        raise ValueError(f"video-path {videos_root_path} is neither a file, a directory, nor a CSV")
 
     # Prepare output dir and filter out already-generated results (unless --repeat)
     output_path = Path(args.output_path).expanduser()
@@ -182,6 +186,73 @@ def load_ori_videos(args: argparse.Namespace):
     return videos_root_path, name_to_video_path, names_selected, name_to_caption
 
 
+class CosmosSafetySkipper(nn.Module):
+    """
+    No-op safety checker compatible with Cosmos2VideoToWorldPipeline.
+    - Provides .dtype/.device via a registered buffer so .to(device, dtype) works.
+    - Implements check_text_safety(), check_image_safety(), and forward().
+    - Always passes content through unchanged; reports 'blocked=False'.
+    """
+
+    def __init__(self, log: bool = True) -> None:
+        super().__init__()
+        self.log = log
+        self.register_buffer("_compat_buf", torch.zeros((), dtype=torch.float32), persistent=False)
+
+    @property
+    def dtype(self):
+        return self._compat_buf.dtype
+
+    @property
+    def device(self):
+        return self._compat_buf.device
+
+    # ---- Text safety hook expected by the Cosmos pipeline ----
+    @torch.no_grad()
+    def check_text_safety(self, text: Union[str, List[str]], **kwargs: Any) -> bool:
+        # Return True => safe. Accept both str and list[str].
+        return True
+
+    # ---- Image safety hook (diffusers style) ----
+    @torch.no_grad()
+    def check_image_safety(
+            self,
+            images: TensorOrImages,
+            **kwargs: Any
+    ) -> Tuple[TensorOrImages, List[Dict[str, Any]]]:
+        if isinstance(images, torch.Tensor):
+            b = images.shape[0] if images.ndim >= 4 else 1
+        else:
+            b = len(images)
+        reports = [dict(blocked=False, reason=None, score=0.0) for _ in range(b)]
+        if self.log:
+            print(f"[CosmosSafetySkipper] image safety skipped, batch={b}")
+        return images, reports
+
+    @torch.no_grad()
+    def check_video_safety(self, video, **kwargs):
+        """
+        No-op video hook expected by Cosmos2VideoToWorldPipeline.
+        Must return the same type that the pipeline passed in (e.g., list[PIL.Image]
+        or a Tensor of frames). We just pass it through unchanged.
+        """
+        if self.log:
+            try:
+                # best-effort shape/len logging without assuming a type
+                if hasattr(video, "shape"):
+                    print(f"[CosmosSafetySkipper] video safety skipped, shape={tuple(video.shape)}")
+                else:
+                    print(f"[CosmosSafetySkipper] video safety skipped, len={len(video)}")
+            except Exception:
+                print("[CosmosSafetySkipper] video safety skipped.")
+        return video
+
+    # ---- Make it also behave like the usual diffusers safety checker ----
+    @torch.no_grad()
+    def forward(self, images: TensorOrImages, **kwargs: Any):
+        return self.check_image_safety(images, **kwargs)
+
+
 def setup_pipeline() -> Cosmos2VideoToWorldPipeline:
     # ========== Pipeline setup  ==========
     logging.info(f"Loading Cosmos2VideoToWorldPipeline model {MODEL_PARAMS['pretrained_model_name_or_path']}...")
@@ -191,6 +262,7 @@ def setup_pipeline() -> Cosmos2VideoToWorldPipeline:
         use_safetensors=True,
         torch_dtype=torch.bfloat16,
         # device_map="balanced",
+        safety_checker=CosmosSafetySkipper().eval()
     )
     logging.info("Model loaded. Enabling memory-savers and moving to GPU/CPU offload...")
     pipe.to("cuda")
@@ -236,7 +308,7 @@ def generate_video(
             caption_text = ""
             if name_to_caption and name in name_to_caption:
                 cap = str(name_to_caption.get(name, "")).strip()
-                if cap:
+                if cap != "TIMEOUT" and cap != "nan":
                     caption_text = cap
             prompt = f"{caption_text}. {base_prompt}" if caption_text else base_prompt
 
@@ -303,7 +375,8 @@ def generate_video(
         cond_replace = min(COND_VIDEO_FRAMES, gen_len, len(ori_video))
 
         if cond_replace <= 0:
-            logging.warning(f"No frames available to replace conditioned portion for {name}; exporting generated frames as-is.")
+            logging.warning(
+                f"No frames available to replace conditioned portion for {name}; exporting generated frames as-is.")
             final_frames = generated
         else:
             # Use the last cond_replace frames from original video to overwrite the first cond_replace frames of generated

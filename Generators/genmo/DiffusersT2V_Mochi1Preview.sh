@@ -25,7 +25,7 @@ conda activate deepfake311
 srun python3 -W ignore \
   ./DiffusersT2V_Mochi1Preview.py \
   -p "/projects/hi-paris/DeepFakeDataset/T2V_prompts/prompts_gemini/gemini_2" \
-  -o "/projects/hi-paris/DeepFakeDataset/DeepFake_V2/T2V/genmo/mochi-1-preview" \
+  -o "/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition/T2V/Mochi1/fake_videos" \
   -n 1000
 
 EXIT_CODE=$?
