@@ -2,10 +2,6 @@
 	path = StyleTrans/AnyV2V
 	url = https://github.com/lavandejoey/AnyV2V.git
 	branch = main
-[submodule "StyleTrans/UniVST"]
-	path = StyleTrans/UniVST
-	url = https://github.com/lavandejoey/UniVST
-	branch = main
 [submodule "Detectors/AIGVDet"]
 	path = Detectors/AIGVDet
 	url = https://github.com/lavandejoey/AIGVDet
@@ -13,4 +9,24 @@
 [submodule "Detectors/DeMamba"]
 	path = Detectors/DeMamba
 	url = https://github.com/lavandejoey/DeMamba
+	branch = main
+[submodule "Detectors/FakeVLM"]
+	path = Detectors/FakeVLM
+	url = https://github.com/lavandejoey/FakeVLM.git
+	branch = main
+[submodule "Detectors/SIDA"]
+	path = Detectors/SIDA
+	url = https://github.com/lavandejoey/SIDA.git
+	branch = main
+[submodule "Detectors/AntifakePrompt"]
+	path = Detectors/AntifakePrompt
+	url = https://github.com/lavandejoey/AntifakePrompt.git
+	branch = main
+[submodule "Detectors/MM-Det"]
+	path = Detectors/MM-Det
+	url = https://github.com/lavandejoey/MM-Det.git
+	branch = main
+[submodule "Detectors/BusterX"]
+	path = Detectors/BusterX
+	url = https://github.com/lavandejoey/BusterX.git
 	branch = main

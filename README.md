@@ -27,4 +27,10 @@
 |                                      | 6476 |                                                                        |                 |            |                                                                                |||
  
 
-### `Detectors/AIGVDet` 
+## Benchmarking
+
+https://github.com/lavandejoey/FakeVLM
+https://github.com/lavandejoey/SIDA
+https://github.com/lavandejoey/AntifakePrompt
+https://github.com/lavandejoey/MM-Det
+https://github.com/lavandejoey/BusterX
