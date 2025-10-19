@@ -46,3 +46,7 @@
 	path = Detectors/c2p_FakeParts
 	url = https://github.com/Triocrossing/c2p_FakeParts
 	branch = main
+[submodule "Detectors/fatformer_fakeparts"]
+	path = Detectors/fatformer_fakeparts
+	url = https://github.com/Triocrossing/fatformer_fakeparts
+	branch = main

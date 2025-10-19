@@ -69,9 +69,16 @@ Data Physically stored in
 
 ## CLIP-Based Methods
 
-### [FatFormer]()
+### [Triocrossing/FatFormer](https://github.com/Triocrossing/fatformer_fakeparts)
+- Download ckpt first:
+  - [fatformer_fakeparts_ckpt.pth](https://drive.google.com/file/d/1Q_Kgq4ygDf8XEHgAf-SgDN6Ru_IOTLkj/view?usp=sharing)
+  - [ViT-L-14.pt](https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt)
+- `conda activate fakevlm310`
+- `bash Detectors/fatformer_fakeparts/FatFormerEval.sh`
+- DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+- $\rightarrow$ `./results/{date_time}_fakeVLM/predictions.csv`
 
-### [C2P](https://github.com/Triocrossing/c2p_FakeParts)
+### [Triocrossing/C2P](https://github.com/Triocrossing/c2p_FakeParts)
 - `conda activate fakevlm310`
 - `bash Detectors/c2p_FakeParts/C2PEval.sh`
 - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
