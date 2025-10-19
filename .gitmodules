@@ -42,3 +42,7 @@
 	path = Detectors/D3
 	url = https://github.com/lavandejoey/D3
 	branch = main
+[submodule "Detectors/c2p_FakeParts"]
+	path = Detectors/c2p_FakeParts
+	url = https://github.com/Triocrossing/c2p_FakeParts
+	branch = main

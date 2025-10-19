@@ -62,48 +62,76 @@ Data Physically stored in
 
 # Detection Methods Execution
 ## Conventional DNN Methods
-### [AIGVDet](https://github.com/lavandejoey/AIGVDet)
+### [lavandejoey/AIGVDet](https://github.com/lavandejoey/AIGVDet)
 - `conda activate fakevlm310`
+-
 ### DeMamba: WHERE IS MODEL?
 
 ## CLIP-Based Methods
+
 ### [FatFormer]()
-### [C2P]()
-### [UniversalFakeDetect](https://github.com/lavandejoey/UniversalFakeDetect)
+
+### [C2P](https://github.com/Triocrossing/c2p_FakeParts)
 - `conda activate fakevlm310`
+- `bash Detectors/c2p_FakeParts/C2PEval.sh`
+- DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+- $\rightarrow$ `./results/{date_time}_C2P-CLIP/predictions.csv`
+
+### [lavandejoey/UniversalFakeDetect](https://github.com/lavandejoey/UniversalFakeDetect)
+- `conda activate fakevlm310`
+- `bash Detectors/UniversalFakeDetect/UniFakeDetEval.sh`
 - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
 - $\rightarrow$ `./results/{date_time}_clip_vitl14/predictions.csv`
-### [De-Fake](https://github.com/lavandejoey/De-Fake)
+
+### [lavandejoey/De-Fake](https://github.com/lavandejoey/De-Fake)
 - Download ckpt first:
   - [clip_linear.pt](https://drive.google.com/file/d/1qI7x5iodaCFq0S61LKw4wWjql7cYou_4/view?usp=sharing)
   - [finetune_clip.pt](https://drive.google.com/file/d/1SuenxJP10VwArC6zW0SHMUGObMRqQhBD/view?usp=sharing)
 - `conda activate defake`
+- `bash Detectors/De-Fake/DeFakeEval.sh`
 - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
 - $\rightarrow$ `./results/{date_time}_DeFake_ViTB32/predictions.csv`
-### [D3](https://github.com/lavandejoey/D3)
+
+### [lavandejoey/D3](https://github.com/lavandejoey/D3)
 - `conda activate fakevlm310`
+- `bash Detectors/D3/D3Eval.sh`
 - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
 - $\rightarrow$ `./results/{date_time}_DeFake_ViTB32/predictions.csv`
 
 ## VLM Based Methods
-### [FakeVLM](https://github.com/lavandejoey/FakeVLM)
+
+### [lavandejoey/FakeVLM](https://github.com/lavandejoey/FakeVLM)
 - `conda activate fakevlm310`
+- `bash Detectors/FakeVLM/FakeVLMEval.sh`
 - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
 - $\rightarrow$ `./results/{date_time}_fakeVLM/predictions.csv`
-### [SIDA](https://github.com/lavandejoey/SIDA)
+
+### [lavandejoey/SIDA](https://github.com/lavandejoey/SIDA)
 - `conda activate sida311`
+- `bash Detectors/SIDA/SIDAEval.sh`
 - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
 - $\rightarrow$ `./results/{date_time}_SIDA-13B_eval/predictions.csv`
-### [AntifakePrompt](https://github.com/lavandejoey/AntifakePrompt)
+
+### [lavandejoey/AntifakePrompt](https://github.com/lavandejoey/AntifakePrompt)
 - Download ckpt with [download_checkpoints.sh](Detectors/AntifakePrompt/ckpt/download_checkpoints.sh):
   - [COCO_150k_SD3_SD2IP.pth](https://drive.google.com/file/d/1EUnVG4OZZPXeOyWaa5P590yCKGH-nunQ/view?usp=drive_link)
   - [COCO_150k_SD3_SD2IP_lama.pth](https://drive.google.com/file/d/1qnZfCknNHgC-Nhlwbab9Jg3x9sOof3gG/view?usp=drive_link)
 - `conda activate antifake310`
+- `bash Detectors/AntifakePrompt/AntifakeEval.sh`
 - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
 - $\rightarrow$ `./results/{date_time}_Antifake_blip2/predictions.csv`
-### [MM-Det](https://github.com/fira7s/MM-Det.git)
+
+### [fira7s/MM-Det](https://github.com/fira7s/MM-Det.git)
+- `conda activate MM_Det`
+- `bash Detectors/MM-Det/MMDetEval.sh`
+- DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+- $\rightarrow$ `./results/{date_time}_MMDet/predictions.csv`
 ### BusterX
 - ？
+
+## Diffusion-Based Methods
+### DRCT
+### ~~DIRE - Unscientific Output~~
 
 # Data Output
 
