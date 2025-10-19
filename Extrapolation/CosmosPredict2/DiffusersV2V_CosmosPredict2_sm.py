@@ -57,9 +57,9 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # ========== GLOBAL SETTINGS ==========
 # We have originally unknown frames of video,
 # We have 129 / 25fps videos other path
-# 50 last frame for condition
+# 40 last frame for condition
 # 129 frames generated (including condition)
-# Replace 50 pre-condition frames with original clip
+# Replace 40 pre-condition frames with original clip
 COND_VIDEO_FRAMES = 40  # number of input frames to condition on
 VIDEO_PARAMS = {
     "num_frames": 129,
