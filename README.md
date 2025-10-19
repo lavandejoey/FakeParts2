@@ -29,8 +29,94 @@
 
 ## Benchmarking
 
-https://github.com/lavandejoey/FakeVLM
-https://github.com/lavandejoey/SIDA
-https://github.com/lavandejoey/AntifakePrompt
-https://github.com/lavandejoey/MM-Det
-https://github.com/lavandejoey/BusterX
+# Data Preparation
+
+HF repository upload folder: `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition`
+
+Dataset structure
+
+Relative paths has 2 patterns, SUBSET in `{fake_frames, fake_videos, real_frames, real_videos}`:
+
+```text
+<TASK>/<METHOD>/<SUBSET>/
+<TASK>/<METHOD>/<S_METHOD>/<SUBSET>/
+```
+
+After that, the files are organized as:
+
+```text
+<v_name>/frame_<%06d>.jpg 
+<v_name>.mp4
+```
+
+### Soft Links for Data
+
+Data Physically stored in
+
+- `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only/` for frames' folders.
+- `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_generation_dectection/` for videos.
+- Soft-linking: `FakeParts_data_addition_videos_only` -- to --> `FakeParts_data_addition_frames_generation_dectection`
+  for videos.
+- Soft-linking: `FakeParts_data_addition_frames_0_1_labels` -- to -->
+  `FakeParts_data_addition_frames_only/{0_real,1_fake}` for frames with 0/1 labels.
+
+# Detection Methods Execution
+## Conventional DNN Methods
+### [AIGVDet](https://github.com/lavandejoey/AIGVDet)
+- `conda activate fakevlm310`
+### DeMamba: WHERE IS MODEL?
+
+## CLIP-Based Methods
+### [FatFormer]()
+### [C2P]()
+### [UniversalFakeDetect](https://github.com/lavandejoey/UniversalFakeDetect)
+- `conda activate fakevlm310`
+- DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+- $\rightarrow$ `./results/{date_time}_clip_vitl14/predictions.csv`
+### [De-Fake](https://github.com/lavandejoey/De-Fake)
+- Download ckpt first:
+  - [clip_linear.pt](https://drive.google.com/file/d/1qI7x5iodaCFq0S61LKw4wWjql7cYou_4/view?usp=sharing)
+  - [finetune_clip.pt](https://drive.google.com/file/d/1SuenxJP10VwArC6zW0SHMUGObMRqQhBD/view?usp=sharing)
+- `conda activate defake`
+- DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+- $\rightarrow$ `./results/{date_time}_DeFake_ViTB32/predictions.csv`
+### [D3](https://github.com/lavandejoey/D3)
+- `conda activate fakevlm310`
+- DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+- $\rightarrow$ `./results/{date_time}_DeFake_ViTB32/predictions.csv`
+
+## VLM Based Methods
+### [FakeVLM](https://github.com/lavandejoey/FakeVLM)
+- `conda activate fakevlm310`
+- DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+- $\rightarrow$ `./results/{date_time}_fakeVLM/predictions.csv`
+### [SIDA](https://github.com/lavandejoey/SIDA)
+- `conda activate sida311`
+- DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+- $\rightarrow$ `./results/{date_time}_SIDA-13B_eval/predictions.csv`
+### [AntifakePrompt](https://github.com/lavandejoey/AntifakePrompt)
+- Download ckpt with [download_checkpoints.sh](Detectors/AntifakePrompt/ckpt/download_checkpoints.sh):
+  - [COCO_150k_SD3_SD2IP.pth](https://drive.google.com/file/d/1EUnVG4OZZPXeOyWaa5P590yCKGH-nunQ/view?usp=drive_link)
+  - [COCO_150k_SD3_SD2IP_lama.pth](https://drive.google.com/file/d/1qnZfCknNHgC-Nhlwbab9Jg3x9sOof3gG/view?usp=drive_link)
+- `conda activate antifake310`
+- DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+- $\rightarrow$ `./results/{date_time}_Antifake_blip2/predictions.csv`
+### [MM-Det](https://github.com/fira7s/MM-Det.git)
+### BusterX
+- ？
+
+# Data Output
+
+CSV files with columns:
+
+| Col         | Description                                                                                                 |
+|-------------|-------------------------------------------------------------------------------------------------------------|
+| `sample_id` | unique id per row (string or int) you use to join with index                                                |
+| `task`      | `Change_of_style`, `Extrapolation`, `Faceswap`, `I2V`, `IT2V`, `Inpainting`, `Interpolation`, `Real`, `T2V` |
+| `method`    | `AnyV2V`, `RAVE`, `Cosmos-Predict2`, `Insightface`, etc.                                                    |
+| `subset`    | `real_videos`, `fake_videos`, `real_frames`, `fake_frames`                                                  |
+| `label`     | 0=real, 1=fake (ground truth)                                                                               |
+| `model`     | model name or identifier                                                                                    |
+| `mode`      | 'video' or 'frame'                                                                                          |
+| `score`     | real-valued score, higher => more likely fake, -1 indicating unavailable                                    |
+| `pred`      | hard prediction in {0,1} produced by the model                                                              | 
