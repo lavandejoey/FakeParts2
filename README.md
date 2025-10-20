@@ -2,18 +2,19 @@
 
 Table of Contents
 =================
+
 - [Environment Setup](#environment-setup)
 - [Video Generation](#video-generation)
-  - [T2V Models and Prompts](#t2v-models-and-prompts)
+    - [T2V Models and Prompts](#t2v-models-and-prompts)
 - [Data Preparation](#data-preparation)
-  - [Dataset structure](#dataset-structure)
-  - [Soft Links for Data](#soft-links-for-data)
+    - [Dataset structure](#dataset-structure)
+    - [Soft Links for Data](#soft-links-for-data)
 - [Testing Different Detectors](#testing-different-detectors)
-  - [Conda env Configuration:](#conda-env-configuration)
-  - [Conventional DNN Methods](#conventional-dnn-methods)
-  - [CLIP-Based Methods](#clip-based-methods)
-  - [VLM Based Methods](#vlm-based-methods)
-  - [Diffusion-Based Methods](#diffusion-based-methods)
+    - [Conda env Configuration:](#conda-env-configuration)
+    - [Conventional DNN Methods](#conventional-dnn-methods)
+    - [CLIP-Based Methods](#clip-based-methods)
+    - [VLM Based Methods](#vlm-based-methods)
+    - [Diffusion-Based Methods](#diffusion-based-methods)
 - [Data Output](#data-output)
 
 ## Environment Setup
@@ -49,8 +50,6 @@ HF repository upload folder: `/projects/hi-paris/DeepFakeDataset/FakeParts_data_
 ### Dataset structure
 
 **The structure sample in tree form: [dataset_tree.md](dataset_tree.md)**
-
-```text
 
 Relative paths has 2 patterns, SUBSET in `{fake_frames, fake_videos, real_frames, real_videos}`:
 
@@ -99,75 +98,121 @@ Models sharing the same environment are grouped together.
     - `conda activate fakevlm310`
     -
 - DeMamba: WHERE IS MODEL?
-
+---
 ### CLIP-Based Methods
 
 - [Triocrossing/FatFormer](https://github.com/Triocrossing/fatformer_fakeparts)<a id="FatFormer"></a>
-    - Download ckpt first:
-        - [fatformer_fakeparts_ckpt.pth](https://drive.google.com/file/d/1Q_Kgq4ygDf8XEHgAf-SgDN6Ru_IOTLkj/view?usp=sharing)
-        - [ViT-L-14.pt](https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt)
-    - `conda activate fakevlm310`
-    - `bash Detectors/fatformer_fakeparts/FatFormerEval.sh`
-    - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
-    - $\rightarrow$ `./results/{date_time}_fakeVLM/predictions.csv`
-
+  - Download ckpt first:
+      - [fatformer_fakeparts_ckpt.pth](https://drive.google.com/file/d/1Q_Kgq4ygDf8XEHgAf-SgDN6Ru_IOTLkj/view?usp=sharing)
+      - [ViT-L-14.pt](https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt)
+  - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+  - $\rightarrow$ `./results/{date_time}_fakeVLM/predictions.csv`
+  ```bash
+  cd Detectors/fatformer_fakeparts || exit
+  # conda env create -f env_fakevlm310.yml
+  conda activate fakevlm310
+  [ -f pretrained/fatformer_4class_ckpt.pth ] && [ -f pretrained/ViT-L-14.pt ] && echo "All ckpt done" || echo "Download ckpt first"
+  bash FatFormerEval.sh
+  ```
+---
 - [Triocrossing/C2P](https://github.com/Triocrossing/c2p_FakeParts)<a id="C2P"></a>
-    - `conda activate fakevlm310`
-    - `bash Detectors/c2p_FakeParts/C2PEval.sh`
-    - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
-    - $\rightarrow$ `./results/{date_time}_C2P-CLIP/predictions.csv`
-
+  - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+  - $\rightarrow$ `./results/{date_time}_C2P-CLIP/predictions.csv`
+  ```bash
+  cd Detectors/c2p_FakeParts || exit
+  # conda env create -f env_fakevlm310.yml
+  conda activate fakevlm310
+  bash C2PEval.sh
+  ``` 
+---
 - [lavandejoey/UniversalFakeDetect](https://github.com/lavandejoey/UniversalFakeDetect)<a id="UniversalFakeDetect"></a>
-    - `conda activate fakevlm310`
-    - `bash Detectors/UniversalFakeDetect/UniFakeDetEval.sh`
+    ```bash
+    cd Detectors/UniversalFakeDetect || exit
+    # conda env create -f env_fakevlm310.yml
+    conda activate fakevlm310
+    bash UniFakeDetEval.sh
+    ``` 
     - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
     - $\rightarrow$ `./results/{date_time}_clip_vitl14/predictions.csv`
-
+---
 - [lavandejoey/De-Fake](https://github.com/lavandejoey/De-Fake)<a id="De-Fake"></a>
-    - Download ckpt first:
-        - [clip_linear.pt](https://drive.google.com/file/d/1qI7x5iodaCFq0S61LKw4wWjql7cYou_4/view?usp=sharing)
-        - [finetune_clip.pt](https://drive.google.com/file/d/1SuenxJP10VwArC6zW0SHMUGObMRqQhBD/view?usp=sharing)
-    - `conda activate defake`
-    - `bash Detectors/De-Fake/DeFakeEval.sh`
-    - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
-    - $\rightarrow$ `./results/{date_time}_DeFake_ViTB32/predictions.csv`
-
+  - Download ckpt first:
+      - [clip_linear.pt](https://drive.google.com/file/d/1qI7x5iodaCFq0S61LKw4wWjql7cYou_4/view?usp=sharing)
+      - [finetune_clip.pt](https://drive.google.com/file/d/1SuenxJP10VwArC6zW0SHMUGObMRqQhBD/view?usp=sharing)
+  - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+  - $\rightarrow$ `./results/{date_time}_DeFake_ViTB32/predictions.csv`
+  ```bash
+  cd Detectors/De-Fake || exit
+  # conda env create -f env_fakevlm310.yml
+  conda activate fakevlm310
+  [ -f clip_linear.pt ] && [ -f finetune_clip.pt ] && echo "All ckpt done" || echo "Download ckpt first"
+  bash UniFakeDetEval.sh
+  ``` 
+---
 - [lavandejoey/D3](https://github.com/lavandejoey/D3)<a id="D3"></a>
-    - `conda activate fakevlm310`
-    - `bash Detectors/D3/D3Eval.sh`
-    - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
-    - $\rightarrow$ `./results/{date_time}_DeFake_ViTB32/predictions.csv`
-
+  - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+  - $\rightarrow$ `./results/{date_time}_DeFake_ViTB32/predictions.csv`
+  ```bash
+  cd Detectors/D3 || exit
+  # conda env create -f env_fakevlm310.yml
+  conda activate fakevlm310
+  bash D3Eval.sh
+  ``` 
+---
 ### VLM Based Methods
 
 - [lavandejoey/FakeVLM](https://github.com/lavandejoey/FakeVLM)<a id="FakeVLM"></a>
-    - `conda activate fakevlm310`
-    - `bash Detectors/FakeVLM/FakeVLMEval.sh`
-    - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
-    - $\rightarrow$ `./results/{date_time}_fakeVLM/predictions.csv`
-
+  - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+  - $\rightarrow$ `./results/{date_time}_fakeVLM/predictions.csv`
+  ```bash
+  cd Detectors/FakeVLM || exit
+  # conda env create -f env_fakevlm310.yml
+  conda activate fakevlm310
+  bash FakeVLMEval.sh
+  ``` 
+---
 - [lavandejoey/SIDA](https://github.com/lavandejoey/SIDA)<a id="SIDA"></a>
-    - `conda activate sida311`
-    - `bash Detectors/SIDA/SIDAEval.sh`
-    - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
-    - $\rightarrow$ `./results/{date_time}_SIDA-13B_eval/predictions.csv`
-
+  - Download ckpt: [sam_vit_h_4b8939.pth](https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth)
+  - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+  - $\rightarrow$ `./results/{date_time}_SIDA-13B_eval/predictions.csv`
+  ```bash
+  cd Detectors/SIDA || exit
+  # conda env create -f env_sida311.yml
+  conda activate sida311
+  huggingface-cli download saberzl/SIDA-13B --local-dir ./ck/SIDA-13B --resume-download
+  [ -f ck/sam_vit_h_4b8939.pth ] && [ -d ck/SIDA-13B ] && echo "All ckpt done" || echo "Download ckpt first"
+  bash SIDAEval.sh
+  ``` 
+---
 - [lavandejoey/AntifakePrompt](https://github.com/lavandejoey/AntifakePrompt)<a id="AntifakePrompt"></a>
-    - Download ckpt with [download_checkpoints.sh](Detectors/AntifakePrompt/ckpt/download_checkpoints.sh):
-        - [COCO_150k_SD3_SD2IP.pth](https://drive.google.com/file/d/1EUnVG4OZZPXeOyWaa5P590yCKGH-nunQ/view?usp=drive_link)
-        - [COCO_150k_SD3_SD2IP_lama.pth](https://drive.google.com/file/d/1qnZfCknNHgC-Nhlwbab9Jg3x9sOof3gG/view?usp=drive_link)
-    - `conda activate antifake310`
-    - `bash Detectors/AntifakePrompt/AntifakeEval.sh`
-    - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
-    - $\rightarrow$ `./results/{date_time}_Antifake_blip2/predictions.csv`
-
+  - Download ckpt with [download_checkpoints.sh](Detectors/AntifakePrompt/ckpt/download_checkpoints.sh):
+      - [COCO_150k_SD3_SD2IP.pth](https://drive.google.com/file/d/1EUnVG4OZZPXeOyWaa5P590yCKGH-nunQ/view?usp=drive_link)
+      - [COCO_150k_SD3_SD2IP_lama.pth](https://drive.google.com/file/d/1qnZfCknNHgC-Nhlwbab9Jg3x9sOof3gG/view?usp=drive_link)
+  - Edit [blip2_instruct_vicuna7b_textinv.yaml](Detectors/AntifakePrompt/lavis/configs/models/blip2/blip2_instruct_vicuna7b_textinv.yaml), **_finetuned_** args.
+  - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+  - $\rightarrow$ `./results/{date_time}_Antifake_blip2/predictions.csv`
+  ```bash
+  cd Detectors/MM-Det || exit
+  # conda env create -f env_antifake310.yml
+  conda activate antifake310
+  [ -f ckpt/COCO_150k_SD3_SD2IP.pth ] && echo "All ckpt done" || echo "Download ckpt first"
+  bash MMDetEval.sh
+  ```
+---
 - [fira7s/MM-Det](https://github.com/fira7s/MM-Det.git)<a id="MM-Det"></a>
-    - `conda activate MM_Det`
-    - `bash Detectors/MM-Det/MMDetEval.sh`
-    - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
-    - $\rightarrow$ `./results/{date_time}_MMDet/predictions.csv`
+  - Download ckpt first: [current_model.pth](https://drive.google.com/drive/folders/1RRNS8F7ETZWrcBu8fvB3pM9qHbmSEEzy?usp=sharing)
+  - DATA = `/projects/hi-paris/DeepFakeDataset/FakeParts_data_addition_frames_only`
+  - $\rightarrow$ `./results/{date_time}_MMDet/predictions.csv`
+  ```bash
+  cd Detectors/MM-Det || exit
+  # conda env create -f env_MM_Det.yml
+  conda activate MM_Det
+  cd LLaVA && pip install -e . && cd ..
+  [ -f weights/current_model.pth ] && echo "All ckpt done" || echo "Download ckpt first"
+  bash MMDetEval.sh
+  ```
 
-- BusterX
+- ~~BusterX~~
     - ？
 
 ### Diffusion-Based Methods
