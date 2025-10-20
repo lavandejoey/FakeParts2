@@ -1,5 +1,21 @@
 # FakeParts2
 
+Table of Contents
+=================
+- [Environment Setup](#environment-setup)
+- [Video Generation](#video-generation)
+  - [T2V Models and Prompts](#t2v-models-and-prompts)
+- [Data Preparation](#data-preparation)
+  - [Dataset structure](#dataset-structure)
+  - [Soft Links for Data](#soft-links-for-data)
+- [Testing Different Detectors](#testing-different-detectors)
+  - [Conda env Configuration:](#conda-env-configuration)
+  - [Conventional DNN Methods](#conventional-dnn-methods)
+  - [CLIP-Based Methods](#clip-based-methods)
+  - [VLM Based Methods](#vlm-based-methods)
+  - [Diffusion-Based Methods](#diffusion-based-methods)
+- [Data Output](#data-output)
+
 ## Environment Setup
 
 - Clone the complete repository
