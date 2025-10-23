@@ -20,16 +20,26 @@ import cv2
 import numpy as np
 import os
 import pandas as pd
+import torch
 from PIL import Image, ImageFile
 from dataclasses import dataclass, asdict
 from enum import Enum
+from io import BytesIO
 from pathlib import Path
 from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve
-from sympy.printing.pytorch import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
 from typing import Mapping, Sequence, Tuple
 from typing import Optional, Union, Dict, Any, List
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[logging.StreamHandler()],
+)
+log = logging.getLogger(__name__)
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -86,6 +96,7 @@ class FakePartsV2DatasetBase(Dataset):
                  data_root: Union[str, Path] = FRAMES_ROOT,
                  mode: str = "frame",  # "frame" or "video"
                  csv_path: Optional[Union[str, Path]] = FRAMES_CSV,
+                 done_csv_list: Optional[List[Union[str, Path]]] = None,
                  model_name: str = "unknown_model",
                  transform=None,
                  on_corrupt: str = "raise",  # "raise" | "warn" | "skip"
@@ -104,6 +115,31 @@ class FakePartsV2DatasetBase(Dataset):
 
         # Build/ingest index once
         df = index_dataframe(self.data_root, file_exts=self.exts, csv_path=csv_path)
+
+        # Remove done files if provided
+        # safe use csv -> df
+        safe_done_csv = []
+        for done_csv in done_csv_list:
+            # if dir, scan for csv files inside
+            if os.path.isdir(done_csv):
+                # walk dir for csv files
+                for dirpath, _, filenames in os.walk(done_csv):
+                    for fn in filenames:
+                        if fn.lower().endswith(".csv"):
+                            safe_done_csv.append(os.path.join(dirpath, fn))
+            elif os.path.isfile(done_csv) and done_csv.lower().endswith(".csv"):
+                safe_done_csv.append(done_csv)
+
+        if len(safe_done_csv) > 0:
+            done_rel_paths = set()
+            for safe_done_csv in done_csv_list:
+                if os.path.exists(safe_done_csv):
+                    done_df = pd.read_csv(safe_done_csv, usecols=["sample_id"])
+                    done_rel_paths.update(done_df["sample_id"].astype(str).tolist())
+            if done_rel_paths:
+                initial_count = len(df)
+                df = df[~df["rel_path"].isin(done_rel_paths)]
+                log.info(f"Filtered {initial_count - len(df)} done entries from index using {done_csv_list}.")
 
         # Keep only required cols & filter by mode once
         df = df[ENTRY_COL]
@@ -160,7 +196,9 @@ class FakePartsV2DatasetBase(Dataset):
         if self.mode == "frame":
             try:
                 # Ensure file handle is closed even if transform reads lazily
-                with Image.open(abs_path) as im:
+                with open(abs_path, 'rb') as f:
+                    b = f.read()
+                with Image.open(BytesIO(b)) as im:
                     im = im.convert("RGB")
                     im.load()  # materialise, so file can close before transform
                 image = self.transform(im) if self.transform is not None else im
