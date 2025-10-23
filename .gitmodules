@@ -26,10 +26,6 @@
 	path = Detectors/MM-Det
 	url = https://github.com/fira7s/MM-Det.git
 	branch = main
-[submodule "Detectors/BusterX"]
-	path = Detectors/BusterX
-	url = https://github.com/lavandejoey/BusterX.git
-	branch = main
 [submodule "Detectors/De-Fake"]
 	path = Detectors/De-Fake
 	url = https://github.com/lavandejoey/De-Fake
@@ -50,3 +46,6 @@
 	path = Detectors/fatformer_fakeparts
 	url = https://github.com/Triocrossing/fatformer_fakeparts
 	branch = main
+[submodule "Detectors/IML-ViT-FakeParts"]
+	path = Detectors/IML-ViT-FakeParts
+	url = https://github.com/Triocrossing/IML-ViT-FakeParts

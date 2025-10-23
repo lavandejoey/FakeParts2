@@ -212,8 +212,7 @@ Models sharing the same environment are grouped together.
   bash MMDetEval.sh
   ```
 
-- ~~BusterX~~
-    - ？
+- ~~BusterX~~ : No open-source code
 
 ### Diffusion-Based Methods
 
