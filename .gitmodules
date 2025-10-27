@@ -49,3 +49,15 @@
 [submodule "Detectors/IML-ViT-FakeParts"]
 	path = Detectors/IML-ViT-FakeParts
 	url = https://github.com/Triocrossing/IML-ViT-FakeParts
+	branch = main
+[submodule "Detectors/HiFi_IFDL"]
+	path = Detectors/HiFi_IFDL
+	url = https://github.com/lavandejoey/HiFi_IFDL
+	branch = main
+[submodule "Detectors/CNNDetection"]
+	path = Detectors/CNNDetection
+	url = https://github.com/lavandejoey/CNNDetection
+	branch = main
+[submodule "Detectors/NPR_FakeParts"]
+	path = Detectors/NPR_FakeParts
+	url = https://github.com/Triocrossing/NPR_FakeParts

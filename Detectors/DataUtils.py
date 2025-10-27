@@ -115,6 +115,7 @@ class FakePartsV2DatasetBase(Dataset):
 
         # Build/ingest index once
         df = index_dataframe(self.data_root, file_exts=self.exts, csv_path=csv_path)
+        log.info(f"Indexed {len(df)} entries under {data_root} with extensions {self.exts}.")
 
         # Remove done files if provided
         # safe use csv -> df
@@ -132,9 +133,9 @@ class FakePartsV2DatasetBase(Dataset):
 
         if len(safe_done_csv) > 0:
             done_rel_paths = set()
-            for safe_done_csv in done_csv_list:
-                if os.path.exists(safe_done_csv):
-                    done_df = pd.read_csv(safe_done_csv, usecols=["sample_id"])
+            for done_csv in safe_done_csv:
+                if os.path.exists(done_csv):
+                    done_df = pd.read_csv(done_csv, usecols=["sample_id"])
                     done_rel_paths.update(done_df["sample_id"].astype(str).tolist())
             if done_rel_paths:
                 initial_count = len(df)

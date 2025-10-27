@@ -94,3 +94,7 @@ samples/
 # exclude local test scripts or secrets
 secrets.*
 *.local.json
+
+*frames_index.csv
+*method_summary.csv
+*videos_index.csv

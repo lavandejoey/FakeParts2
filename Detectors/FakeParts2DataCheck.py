@@ -45,7 +45,7 @@ try:
 except Exception:  # pragma: no cover
     cv2 = None
 
-# === Config ===
+# Config
 # VIDEOS_ROOT = Path("/home/zliu/FakeParts2/datasets/FakeParts_V2")
 # FRAMES_ROOT = Path("/home/zliu/FakeParts2/datasets/FakeParts_V2_Frame")
 # VIDEOS_CSV = Path("/home/zliu/FakeParts2/datasets/videos_index.csv")
@@ -138,7 +138,7 @@ def _to_index_entry(root: Path, file_path: Path, mode: str) -> IndexEntry:
                       label=_label_from_subset(subset_enum), mode=mode, )
 
 
-# === Indexers ===
+# Indexers
 def build_videos_index() -> pd.DataFrame:
     rows: List[dict] = []
     for f in _iter_files(VIDEOS_ROOT, VID_EXTS):
@@ -171,7 +171,7 @@ def build_frames_index() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# === Extraction helpers ===
+# Extraction helpers
 def _ensure_dir(d: Path) -> None:
     if d.exists():
         return
@@ -225,7 +225,7 @@ def _extract_with_cv2(video_path: Path, out_dir: Path, frame_selector: Optional[
     return written
 
 
-# === Special-case splitting policies ===
+# Special-case splitting policies
 def _split_policy(task: str, subset: Subset, TotalFrames: int) -> Tuple[Tuple[int, int], Tuple[int, int]] | None:
     """Return (real_range, fake_range) if a split is required for this (task, subset).
     Ranges are [start, end) in frame indices. Return None for the default policy.
@@ -371,7 +371,7 @@ def extract_missing_frames(videos_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(actions)
 
 
-# === Reports ===
+# Reports
 def differential_report(videos_df: pd.DataFrame, frames_df: pd.DataFrame) -> pd.DataFrame:
     # Normalize
     v = videos_df.copy()
@@ -415,7 +415,7 @@ def differential_report(videos_df: pd.DataFrame, frames_df: pd.DataFrame) -> pd.
     return rep
 
 
-# === Method-level summary ===
+# Method-level summary
 def method_summary_table(videos_df: pd.DataFrame, frames_df: pd.DataFrame) -> (pd.DataFrame, pd.DataFrame):
     """
     Aggregate counts per (task, method):
@@ -491,7 +491,9 @@ def method_summary_table(videos_df: pd.DataFrame, frames_df: pd.DataFrame) -> (p
     out["FakeFrames"] = out["FakeFrames"].astype(int)
     out["TotalVideos"] = out["RealVideos"] + out["FakeVideos"]
     out["TotalFrames"] = out["RealFrames"] + out["FakeFrames"]
-    out["AvgFramePerVideo"] = (out["TotalFrames"] / out["VFrame"].replace({0: pd.NA})).round(1)
+    # out["AvgFramePerVideo"] = (out["TotalFrames"] / out["VFrame"].replace({0: pd.NA})).round(1)
+    denom = out["VFrame"].mask(out["VFrame"] == 0)
+    out["AvgFramePerVideo"] = (out["TotalFrames"] / denom).round(1)
 
     cols = [
         "task", "method",
@@ -502,6 +504,11 @@ def method_summary_table(videos_df: pd.DataFrame, frames_df: pd.DataFrame) -> (p
     for c in out.columns:
         if c not in cols:
             cols.append(c)
+    total_denom = out["VFrame"].sum()
+    if total_denom == 0:
+        avg_total = float("nan")
+    else:
+        avg_total = out["TotalFrames"].sum() / total_denom
     # Calculate total row
     total_data = {
         "task": "ALL",
@@ -512,8 +519,8 @@ def method_summary_table(videos_df: pd.DataFrame, frames_df: pd.DataFrame) -> (p
         "RealFrames": out["RealFrames"].sum(),
         "FakeFrames": out["FakeFrames"].sum(),
         "TotalFrames": out["TotalFrames"].sum(),
-        "VFrame": out["VFrame"].sum(),
-        "AvgFramePerVideo": (out["TotalFrames"].sum() / out["VFrame"].replace({0: pd.NA}).sum()).round(1),
+        "VFrame": total_denom,
+        "AvgFramePerVideo": round(avg_total, 1) if total_denom != 0 else float("nan"),
     }
     total_df = pd.DataFrame([total_data])
     return out[cols], total_df
@@ -526,7 +533,7 @@ def print_method_summary_table(videos_df: pd.DataFrame, frames_df: pd.DataFrame,
     import sys
     title = "Method-level summary"
     dash_len = 58
-    print(f"\n{'=' * dash_len} {title} {'-' * dash_len}", file=sys.stderr)
+    print(f"\n{'=' * dash_len} {title} {'=' * dash_len}", file=sys.stderr)
     with pd.option_context("display.max_rows", None, "display.max_columns", None, "display.width", 200):
         print(df.to_string(index=False), file=sys.stderr)
     if save_dir is not None:
@@ -536,7 +543,7 @@ def print_method_summary_table(videos_df: pd.DataFrame, frames_df: pd.DataFrame,
         print(f"\n  -> {path}", file=sys.stderr)
 
 
-# === Main ===
+# Main
 def main(argv: Optional[List[str]] = None) -> int:
     # 1) Index
     print("[1/6] Indexing videos ...", file=sys.stderr)
@@ -587,6 +594,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     else:
         act_counts = {}
     print(f"  -> actions: {act_counts}", file=sys.stderr)
+    # collect "cannot_open_video" videos
+    bug_video_list = [row["video"] for _, row in extract_df.iterrows() if row["action"] == "cannot_open_video"]
+    if len(bug_video_list) > 0:
+        print("Videos that cannot be opened:", file=sys.stderr)
+        for bv in bug_video_list:
+            print(f"  - {bv}", file=sys.stderr)
 
     # 4) Re-index frames after extraction
     print("[6/6] Re-index frames ...", file=sys.stderr)
